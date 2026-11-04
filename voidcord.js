@@ -715,6 +715,57 @@
 }
 `;
 
+  vcStyles += `
+.vc-silent-typing-btn {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  border: none !important;
+  color: #949ba4 !important;
+  transition: color 0.15s ease, background 0.15s ease !important;
+}
+.vc-silent-typing-btn:hover {
+  color: #dbdee1 !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+.vc-silent-typing-btn.active {
+  color: #ed4245 !important;
+}
+.vc-st-tooltip {
+  position: absolute !important;
+  bottom: calc(100% + 10px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #111214 !important;
+  color: #dbdee1 !important;
+  padding: 6px 10px !important;
+  border-radius: 5px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: opacity 0.12s ease, visibility 0.12s ease !important;
+  z-index: 10000 !important;
+}
+.vc-st-tooltip::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  border: 5px solid transparent !important;
+  border-top-color: #111214 !important;
+}
+`;
   let styleTag = document.getElementById('voidcord-clean-css');
   if (!styleTag) {
     styleTag = document.createElement('style');
@@ -903,6 +954,12 @@
           if (parsed.plugins['Plus4f'] === undefined) {
             parsed.plugins['Plus4f'] = true;
           }
+          if (parsed.plugins['SilentTyping'] === undefined) {
+            parsed.plugins['SilentTyping'] = true;
+          }
+        }
+        if (!parsed.silentTyping) {
+          parsed.silentTyping = { enabled: true, showChatButton: true };
         }
         delete parsed.customCssText;
         delete parsed.soundPreset;
@@ -916,7 +973,12 @@
         'DetailedTimestamps': true,
         'DeveloperTools': true,
         'MessageLogger': true,
-        'Plus4f': true
+        'Plus4f': true,
+        'SilentTyping': true
+      },
+      silentTyping: {
+        enabled: true,
+        showChatButton: true
       }
     };
   }
@@ -961,6 +1023,13 @@
     }
   }
 
+  function isSilentTypingActive() {
+    if (!appPrefs || !appPrefs.plugins) return false;
+    if (!appPrefs.plugins['SilentTyping']) return false;
+    if (appPrefs.silentTyping?.enabled === false) return false;
+    return true;
+  }
+
   const OrigWebSocket = window.WebSocket;
   if (OrigWebSocket && !window.__vc_ws_hooked) {
     window.__vc_ws_hooked = true;
@@ -977,7 +1046,24 @@
       return ws;
     };
     window.WebSocket.prototype = OrigWebSocket.prototype;
+
+    const origWsSend = OrigWebSocket.prototype.send;
+    OrigWebSocket.prototype.send = function(data) {
+      if (isSilentTypingActive()) {
+        if (typeof data === 'string' && (data.includes('"typing"') || data.includes('"type":"typing"'))) {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'typing' || parsed.op === 4 || parsed.t === 'TYPING_START') {
+              return;
+            }
+          } catch (_) {}
+        }
+      }
+      return origWsSend.apply(this, arguments);
+    };
   }
+
+
 
   const OrigXHR = window.XMLHttpRequest;
   if (OrigXHR && !window.__vc_xhr_hooked) {
@@ -990,12 +1076,84 @@
     };
     const origSend = OrigXHR.prototype.send;
     OrigXHR.prototype.send = function(body) {
+      if (isSilentTypingActive()) {
+        if (this.__vc_url && String(this.__vc_url).includes('/typing')) {
+          return;
+        }
+        if (typeof body === 'string' && body.includes('"typing"')) {
+          return;
+        }
+      }
       if (this.__vc_method === 'DELETE' || (typeof this.__vc_url === 'string' && this.__vc_url.includes('/messages'))) {
         const m = String(this.__vc_url).match(/(?:id=eq\.|messages\/)([a-zA-Z0-9_-]+)/);
         if (m && m[1]) recordDeletedMessage(m[1]);
       }
       return origSend.call(this, body);
     };
+  }
+
+  function renderSilentTypingButton() {
+    if (!appPrefs || !appPrefs.plugins || !appPrefs.plugins['SilentTyping']) {
+      const existing = document.getElementById('vc-silent-typing-btn');
+      if (existing) existing.remove();
+      return;
+    }
+    const showBtn = appPrefs.silentTyping?.showChatButton !== false;
+    const tools = document.querySelector('.composer-tools');
+    if (!tools) return;
+
+    let btn = document.getElementById('vc-silent-typing-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'vc-silent-typing-btn';
+      btn.type = 'button';
+      btn.className = 'icon-btn vc-silent-typing-btn';
+      btn.setAttribute('tabindex', '0');
+
+      const tip = document.createElement('div');
+      tip.className = 'vc-st-tooltip';
+      btn.appendChild(tip);
+
+      btn.addEventListener('mouseenter', () => {
+        const active = isSilentTypingActive();
+        tip.textContent = active ? 'Disable Silent Typing' : 'Enable Silent Typing';
+        tip.style.opacity = '1';
+        tip.style.visibility = 'visible';
+      });
+      btn.addEventListener('mouseleave', () => {
+        tip.style.opacity = '0';
+        tip.style.visibility = 'hidden';
+      });
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!appPrefs.silentTyping) appPrefs.silentTyping = {};
+        appPrefs.silentTyping.enabled = !isSilentTypingActive();
+        savePrefs();
+        renderSilentTypingButton();
+        tip.textContent = isSilentTypingActive() ? 'Disable Silent Typing' : 'Enable Silent Typing';
+      });
+
+      tools.insertBefore(btn, tools.firstChild);
+    }
+
+    btn.style.display = showBtn ? 'inline-flex' : 'none';
+    const active = isSilentTypingActive();
+    btn.classList.toggle('active', active);
+
+    let iconWrap = btn.querySelector('.vc-st-icon');
+    if (!iconWrap) {
+      iconWrap = document.createElement('span');
+      iconWrap.className = 'vc-st-icon';
+      iconWrap.style.display = 'inline-flex';
+      btn.appendChild(iconWrap);
+    }
+
+    if (active) {
+      iconWrap.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ed4245" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/><line x1="2" y1="2" x2="22" y2="22" stroke="#ed4245" stroke-width="2.5"/></svg>`;
+    } else {
+      iconWrap.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/></svg>`;
+    }
   }
 
   const plugRegistry = [
@@ -1108,14 +1266,17 @@
       timer: null,
       start: function() {
         const updateCount = () => {
-          const area = document.querySelector('textarea, [contenteditable="true"], .chat-input');
+          const area = document.querySelector('.composer-box textarea, textarea, [contenteditable="true"]');
           if (!area) return;
+          const parent = area.closest('.composer-box') || area.parentElement;
+          if (!parent) return;
           let c = document.getElementById('vc-char-counter');
           if (!c) {
             c = document.createElement('div');
             c.id = 'vc-char-counter';
-            c.style.cssText = 'font-size: 11px; color: #949ba4; padding: 2px 8px; text-align: right; user-select: none; pointer-events: none;';
-            if (area.parentElement) area.parentElement.appendChild(c);
+            c.style.cssText = 'position: absolute; bottom: -18px; right: 8px; font-size: 11px; color: #949ba4; padding: 2px 6px; user-select: none; pointer-events: none; z-index: 5;';
+            parent.style.position = 'relative';
+            parent.appendChild(c);
           }
           const len = (area.value || area.innerText || '').length;
           c.textContent = len > 0 ? `${len} / 4000` : '';
@@ -1230,9 +1391,18 @@
       name: 'SilentTyping',
       tag: 'Privacy',
       desc: 'Prevents typing indicators from broadcasting so others cannot see you typing.',
-      hasSettings: false,
-      start: function() { window.__vc_silent_typing = true; },
-      stop: function() { window.__vc_silent_typing = false; }
+      hasSettings: true,
+      buttonTimer: null,
+      start: function() {
+        if (this.buttonTimer) clearInterval(this.buttonTimer);
+        this.buttonTimer = setInterval(renderSilentTypingButton, 500);
+        renderSilentTypingButton();
+      },
+      stop: function() {
+        if (this.buttonTimer) clearInterval(this.buttonTimer);
+        const existing = document.getElementById('vc-silent-typing-btn');
+        if (existing) existing.remove();
+      }
     },
     {
       id: 'DontRoundMyTimestamps',
@@ -1862,7 +2032,7 @@
         if (window.__vc_notrack && (reqUrl.includes('/science') || reqUrl.includes('/metrics') || reqUrl.includes('sentry') || reqUrl.includes('amplitude'))) {
           return new Response(JSON.stringify({ ok: true }));
         }
-        if (window.__vc_silent_typing && reqUrl.includes('/typing')) {
+        if ((window.__vc_silent_typing || isSilentTypingActive()) && reqUrl.includes('/typing')) {
           return new Response(JSON.stringify({ ok: true }));
         }
 
@@ -3530,7 +3700,43 @@
             cfgPanel.style.display = isOpen ? 'none' : 'flex';
             if (!isOpen && !cfgPanel.__rendered) {
               cfgPanel.__rendered = true;
-              if (p.id === 'MessageLogger') {
+              if (p.id === 'SilentTyping') {
+                const isEnabled = appPrefs.silentTyping?.enabled !== false;
+                const isBtn = appPrefs.silentTyping?.showChatButton !== false;
+                cfgPanel.innerHTML = `
+                  <div style="display: flex; flex-direction: column; gap: 12px; padding: 6px 0;">
+                    <div style="font-size: 12.5px; color: #dbdee1;">
+                      Prevents other users from seeing when you are typing in channels and direct messages.
+                    </div>
+                    <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                      <span style="font-size: 13px; color: #fff;">Silent Typing Enabled</span>
+                      <input type="checkbox" id="vc-st-toggle" ${isEnabled ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: #5865f2;">
+                    </label>
+                    <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                      <span style="font-size: 13px; color: #fff;">Show Button in Chat Bar</span>
+                      <input type="checkbox" id="vc-st-chatbtn-toggle" ${isBtn ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: #5865f2;">
+                    </label>
+                  </div>
+                `;
+                const stToggle = cfgPanel.querySelector('#vc-st-toggle');
+                if (stToggle) {
+                  stToggle.addEventListener('change', () => {
+                    if (!appPrefs.silentTyping) appPrefs.silentTyping = {};
+                    appPrefs.silentTyping.enabled = stToggle.checked;
+                    savePrefs();
+                    renderSilentTypingButton();
+                  });
+                }
+                const btnToggle = cfgPanel.querySelector('#vc-st-chatbtn-toggle');
+                if (btnToggle) {
+                  btnToggle.addEventListener('change', () => {
+                    if (!appPrefs.silentTyping) appPrefs.silentTyping = {};
+                    appPrefs.silentTyping.showChatButton = btnToggle.checked;
+                    savePrefs();
+                    renderSilentTypingButton();
+                  });
+                }
+              } else if (p.id === 'MessageLogger') {
                 cfgPanel.innerHTML = `
                   <div style="display: flex; flex-direction: column; gap: 8px;">
                     <div style="font-size: 12.5px; color: #dbdee1;">
