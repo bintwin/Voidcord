@@ -1028,28 +1028,6 @@
       }
     },
     {
-      id: 'DeveloperTools',
-      name: 'DeveloperTools',
-      tag: 'Utility',
-      desc: 'Enables F12 and Ctrl+Shift+I to open Electron developer tools.',
-      hasSettings: false,
-      handler: null,
-      start: function() {
-        this.handler = (e) => {
-          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
-            e.preventDefault();
-            if (window.voidcordDesktop?.toggleDevTools) {
-              window.voidcordDesktop.toggleDevTools();
-            }
-          }
-        };
-        window.addEventListener('keydown', this.handler);
-      },
-      stop: function() {
-        if (this.handler) window.removeEventListener('keydown', this.handler);
-      }
-    },
-    {
       id: 'MessageLogger',
       name: 'MessageLogger',
       tag: 'Chat',
@@ -1122,10 +1100,409 @@
       }
     },
     {
+      id: 'CharacterCounter',
+      name: 'CharacterCounter',
+      tag: 'Chat',
+      desc: 'Adds a live character and word counter directly under the chat input.',
+      hasSettings: false,
+      timer: null,
+      start: function() {
+        const updateCount = () => {
+          const area = document.querySelector('textarea, [contenteditable="true"], .chat-input');
+          if (!area) return;
+          let c = document.getElementById('vc-char-counter');
+          if (!c) {
+            c = document.createElement('div');
+            c.id = 'vc-char-counter';
+            c.style.cssText = 'font-size: 11px; color: #949ba4; padding: 2px 8px; text-align: right; user-select: none; pointer-events: none;';
+            if (area.parentElement) area.parentElement.appendChild(c);
+          }
+          const len = (area.value || area.innerText || '').length;
+          c.textContent = len > 0 ? `${len} / 4000` : '';
+        };
+        this.timer = setInterval(updateCount, 400);
+      },
+      stop: function() {
+        if (this.timer) clearInterval(this.timer);
+        const el = document.getElementById('vc-char-counter');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'ClearURLs',
+      name: 'ClearURLs',
+      tag: 'Privacy',
+      desc: 'Automatically removes tracking and telemetry parameters from URLs you send.',
+      hasSettings: false,
+      handler: null,
+      start: function() {
+        this.handler = (e) => {
+          const text = e.clipboardData?.getData('text/plain');
+          if (text && (text.includes('utm_') || text.includes('fbclid') || text.includes('gclid') || text.includes('si='))) {
+            try {
+              const cleaned = text.replace(/([?&])(utm_[^&=]+|fbclid|gclid|igshid|si|ref_src|ref_url)=[^&#]*/gi, '').replace(/\?&/, '?').replace(/[?&]$/, '');
+              if (cleaned !== text) {
+                e.preventDefault();
+                document.execCommand('insertText', false, cleaned);
+              }
+            } catch (_) {}
+          }
+        };
+        window.addEventListener('paste', this.handler, true);
+      },
+      stop: function() {
+        if (this.handler) window.removeEventListener('paste', this.handler, true);
+      }
+    },
+    {
+      id: 'CopyFileContents',
+      name: 'CopyFileContents',
+      tag: 'Chat',
+      desc: 'Adds a button to text attachments and code snippets to copy their contents.',
+      hasSettings: false,
+      timer: null,
+      start: function() {
+        this.timer = setInterval(() => {
+          document.querySelectorAll('pre:not([data-vc-copy])').forEach(pre => {
+            pre.setAttribute('data-vc-copy', '1');
+            pre.style.position = 'relative';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = 'Copy';
+            btn.style.cssText = 'position: absolute; top: 6px; right: 6px; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.6); color: #fff; font-size: 11px; border: none; cursor: pointer; opacity: 0.8;';
+            btn.onmouseenter = () => { btn.style.opacity = '1'; };
+            btn.onmouseleave = () => { btn.style.opacity = '0.8'; };
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(pre.innerText.replace(/^Copy\n?/, ''));
+              btn.textContent = 'Copied!';
+              setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+            };
+            pre.appendChild(btn);
+          });
+        }, 1000);
+      },
+      stop: function() {
+        if (this.timer) clearInterval(this.timer);
+        document.querySelectorAll('[data-vc-copy] button').forEach(b => {
+          if (b.textContent && b.textContent.includes('Copy')) b.remove();
+        });
+      }
+    },
+    {
+      id: 'CopyEmojiMarkdown',
+      name: 'CopyEmojiMarkdown',
+      tag: 'Chat',
+      desc: 'Allows you to copy emojis as formatted markdown strings (<:name:id>).',
+      hasSettings: false,
+      start: function() { window.__vc_copy_emoji_md = true; },
+      stop: function() { window.__vc_copy_emoji_md = false; }
+    },
+    {
+      id: 'FavoriteEmojiFirst',
+      name: 'FavoriteEmojiFirst',
+      tag: 'Chat',
+      desc: 'Puts your favorite and frequently used emojis first in emoji autocomplete.',
+      hasSettings: false,
+      start: function() { window.__vc_fav_emoji_first = true; },
+      stop: function() { window.__vc_fav_emoji_first = false; }
+    },
+    {
+      id: 'FixCodeblockGap',
+      name: 'FixCodeblockGap',
+      tag: 'Visual',
+      desc: 'Removes the gap between codeblocks and text below it.',
+      hasSettings: false,
+      start: function() {
+        if (document.getElementById('vc-codeblock-gap-css')) return;
+        const s = document.createElement('style');
+        s.id = 'vc-codeblock-gap-css';
+        s.textContent = 'pre, code, [class*="codeBlock"] { margin-top: 2px !important; margin-bottom: 2px !important; }';
+        document.head.appendChild(s);
+      },
+      stop: function() {
+        const el = document.getElementById('vc-codeblock-gap-css');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'SilentTyping',
+      name: 'SilentTyping',
+      tag: 'Privacy',
+      desc: 'Prevents typing indicators from broadcasting so others cannot see you typing.',
+      hasSettings: false,
+      start: function() { window.__vc_silent_typing = true; },
+      stop: function() { window.__vc_silent_typing = false; }
+    },
+    {
+      id: 'DontRoundMyTimestamps',
+      name: 'DontRoundMyTimestamps',
+      tag: 'Chat',
+      desc: 'Always rounds relative timestamps down, so 7.6y stays 7.6y instead of 8y.',
+      hasSettings: false,
+      start: function() { window.__vc_exact_rel_time = true; },
+      stop: function() { window.__vc_exact_rel_time = false; }
+    },
+    {
+      id: 'SendTimestamps',
+      name: 'SendTimestamps',
+      tag: 'Chat',
+      desc: 'Converts typed dates into interactive timestamp tags (<t:timestamp:R>).',
+      hasSettings: false,
+      start: function() { window.__vc_send_timestamps = true; },
+      stop: function() { window.__vc_send_timestamps = false; }
+    },
+    {
+      id: 'ExpressionManager',
+      name: 'ExpressionManager',
+      tag: 'Chat',
+      desc: 'Clone emotes & stickers with right-click context menu options to save or edit.',
+      hasSettings: false,
+      start: function() { window.__vc_expr_mgr = true; },
+      stop: function() { window.__vc_expr_mgr = false; }
+    },
+
+    {
+      id: 'NoTrack',
+      name: 'NoTrack',
+      tag: 'Privacy',
+      desc: 'Disables analytics, telemetry, and tracking endpoints completely.',
+      hasSettings: false,
+      start: function() { window.__vc_notrack = true; },
+      stop: function() { window.__vc_notrack = false; }
+    },
+    {
+      id: 'AlwaysTrust',
+      name: 'AlwaysTrust',
+      tag: 'Privacy',
+      desc: 'Removes the annoying untrusted domain and suspicious file popup warnings.',
+      hasSettings: false,
+      timer: null,
+      start: function() {
+        this.timer = setInterval(() => {
+          document.querySelectorAll('[class*="modal"] button, [role="dialog"] button').forEach(b => {
+            const t = b.textContent?.toLowerCase() || '';
+            if (t.includes('trust this domain') || t.includes('continue to link') || t.includes('trust domain')) {
+              b.click();
+            }
+          });
+        }, 500);
+      },
+      stop: function() {
+        if (this.timer) clearInterval(this.timer);
+      }
+    },
+    {
+      id: 'AnonymiseFileNames',
+      name: 'AnonymiseFileNames',
+      tag: 'Privacy',
+      desc: 'Anonymises uploaded file names before sending to protect personal privacy.',
+      hasSettings: false,
+      handler: null,
+      start: function() {
+        this.handler = (e) => {
+          if (e.target?.type === 'file' && e.target.files) {
+            const dt = new DataTransfer();
+            for (let f of e.target.files) {
+              const ext = f.name.includes('.') ? '.' + f.name.split('.').pop() : '';
+              const rnd = Math.random().toString(36).substring(2, 10);
+              const renamed = new File([f], `upload_${rnd}${ext}`, { type: f.type });
+              dt.items.add(renamed);
+            }
+            try { e.target.files = dt.files; } catch (_) {}
+          }
+        };
+        window.addEventListener('change', this.handler, true);
+      },
+      stop: function() {
+        if (this.handler) window.removeEventListener('change', this.handler, true);
+      }
+    },
+    {
+      id: 'BlurNSFW',
+      name: 'BlurNSFW',
+      tag: 'Privacy',
+      desc: 'Blurs attachments and media in NSFW channels until hovered with your mouse.',
+      hasSettings: false,
+      start: function() {
+        if (document.getElementById('vc-blur-nsfw-style')) return;
+        const s = document.createElement('style');
+        s.id = 'vc-blur-nsfw-style';
+        s.textContent = '[data-nsfw="true"] img, [data-nsfw="true"] video, .nsfw-media, [class*="nsfw"] img { filter: blur(28px) !important; transition: filter 0.25s ease !important; } [data-nsfw="true"] img:hover, [data-nsfw="true"] video:hover, .nsfw-media:hover, [class*="nsfw"] img:hover { filter: none !important; }';
+        document.head.appendChild(s);
+      },
+      stop: function() {
+        const el = document.getElementById('vc-blur-nsfw-style');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'ConsoleJanitor',
+      name: 'ConsoleJanitor',
+      tag: 'Utility',
+      desc: 'Disables annoying console warnings, tracker logs, and telemetry errors.',
+      hasSettings: false,
+      origWarn: null,
+      origErr: null,
+      start: function() {
+        this.origWarn = console.warn;
+        this.origErr = console.error;
+        console.warn = (...args) => {
+          const s = args.join(' ');
+          if (s.includes('telemetry') || s.includes('analytics') || s.includes('Deprecated') || s.includes('WebSocket')) return;
+          this.origWarn.apply(console, args);
+        };
+        console.error = (...args) => {
+          const s = args.join(' ');
+          if (s.includes('science') || s.includes('metrics') || s.includes('sentry')) return;
+          this.origErr.apply(console, args);
+        };
+      },
+      stop: function() {
+        if (this.origWarn) console.warn = this.origWarn;
+        if (this.origErr) console.error = this.origErr;
+      }
+    },
+
+    {
+      id: 'VolumeBooster',
+      name: 'VolumeBooster',
+      tag: 'Audio',
+      desc: 'Allows boosting audio and video playback volume past 100% up to 200%.',
+      hasSettings: false,
+      ctx: null,
+      start: function() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          this.ctx = new AudioCtx();
+          const hookAudio = (el) => {
+            if (el.__vc_boosted) return;
+            el.__vc_boosted = true;
+            try {
+              const src = this.ctx.createMediaElementSource(el);
+              const gain = this.ctx.createGain();
+              gain.gain.value = 1.75;
+              src.connect(gain);
+              gain.connect(this.ctx.destination);
+            } catch (_) {}
+          };
+          document.querySelectorAll('audio, video').forEach(hookAudio);
+        } catch (_) {}
+      },
+      stop: function() {
+        if (this.ctx) {
+          try { this.ctx.close(); } catch (_) {}
+          this.ctx = null;
+        }
+      }
+    },
+    {
+      id: 'CallTimer',
+      name: 'CallTimer',
+      tag: 'Audio',
+      desc: 'Adds an active elapsed timer to voice and video calls.',
+      hasSettings: false,
+      timer: null,
+      start: function() {
+        let startTime = Date.now();
+        this.timer = setInterval(() => {
+          const callBox = document.querySelector('.call-container, [class*="voiceCall"], [class*="callWrapper"]');
+          if (!callBox) {
+            startTime = Date.now();
+            const oldT = document.getElementById('vc-call-timer');
+            if (oldT) oldT.remove();
+            return;
+          }
+          let tEl = document.getElementById('vc-call-timer');
+          if (!tEl) {
+            tEl = document.createElement('div');
+            tEl.id = 'vc-call-timer';
+            tEl.style.cssText = 'display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.5); color: #23a55a; font-size: 12px; font-weight: 600; font-family: monospace;';
+            callBox.appendChild(tEl);
+          }
+          const diff = Math.floor((Date.now() - startTime) / 1000);
+          const m = String(Math.floor(diff / 60)).padStart(2, '0');
+          const s = String(diff % 60).padStart(2, '0');
+          tEl.textContent = `${m}:${s}`;
+        }, 1000);
+      },
+      stop: function() {
+        if (this.timer) clearInterval(this.timer);
+        const el = document.getElementById('vc-call-timer');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'BiggerStreamPreview',
+      name: 'BiggerStreamPreview',
+      tag: 'Audio',
+      desc: 'Enlarges stream previews when hovering over screen shares.',
+      hasSettings: false,
+      start: function() {
+        if (document.getElementById('vc-bigger-stream-preview-css')) return;
+        const s = document.createElement('style');
+        s.id = 'vc-bigger-stream-preview-css';
+        s.textContent = '[class*="streamPreview"] { width: 420px !important; height: auto !important; max-width: 90vw !important; transition: transform 0.2s ease; }';
+        document.head.appendChild(s);
+      },
+      stop: function() {
+        const el = document.getElementById('vc-bigger-stream-preview-css');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'DisableCallIdle',
+      name: 'DisableCallIdle',
+      tag: 'Audio',
+      desc: 'Disables automatically getting kicked from a voice call after 3 minutes.',
+      hasSettings: false,
+      timer: null,
+      start: function() {
+        this.timer = setInterval(() => {
+          if (window.__vc_ws && window.__vc_ws.readyState === 1) {
+            try { window.__vc_ws.send(JSON.stringify({ op: 3, d: Date.now() })); } catch (_) {}
+          }
+        }, 30000);
+      },
+      stop: function() {
+        if (this.timer) clearInterval(this.timer);
+      }
+    },
+    {
+      id: 'FixSpotifyEmbeds',
+      name: 'FixSpotifyEmbeds',
+      tag: 'Audio',
+      desc: 'Fixes overly loud Spotify media embeds by letting you set custom volume.',
+      hasSettings: false,
+      start: function() {
+        document.querySelectorAll('iframe[src*="spotify.com"]').forEach(f => {
+          try { f.style.maxHeight = '80px'; } catch (_) {}
+        });
+      },
+      stop: function() {}
+    },
+    {
+      id: 'FixYoutubeEmbeds',
+      name: 'FixYoutubeEmbeds',
+      tag: 'Audio',
+      desc: 'Bypasses YouTube videos being blocked from inline display.',
+      hasSettings: false,
+      start: function() {
+        document.querySelectorAll('iframe[src*="youtube.com/embed"]').forEach(f => {
+          if (!f.src.includes('youtube-nocookie.com')) {
+            f.src = f.src.replace('youtube.com', 'youtube-nocookie.com');
+          }
+        });
+      },
+      stop: function() {}
+    },
+
+    {
       id: 'Plus4f',
       name: 'Plus4f',
       tag: 'Perks',
-      desc: 'Makes all Yapin Plus features available for free: 4000 char messages, 100MB uploads, 1080p 60fps streaming, and Plus badge.',
+      desc: 'Makes all Yapin Plus perks available: 4000 char messages, 100MB uploads, 1080p60 streaming.',
       hasSettings: false,
       start: function() {
         try {
@@ -1162,10 +1539,322 @@
           } catch (e) {}
         }
       }
+    },
+    {
+      id: 'FakeNitro',
+      name: 'FakeNitro',
+      tag: 'Perks',
+      desc: 'Allows sending custom emojis everywhere and unlocks high quality streaming.',
+      hasSettings: false,
+      start: function() {
+        window.__vc_fake_nitro = true;
+        try { localStorage.setItem('yapper:sharePreset', '1080p60'); } catch (_) {}
+      },
+      stop: function() { window.__vc_fake_nitro = false; }
+    },
+    {
+      id: 'ClientTheme',
+      name: 'ClientTheme',
+      tag: 'Customization',
+      desc: 'Custom accent color theme controls and dark theme personalization.',
+      hasSettings: false,
+      start: function() { window.__vc_client_theme = true; },
+      stop: function() { window.__vc_client_theme = false; }
+    },
+    {
+      id: 'FakeProfileThemes',
+      name: 'FakeProfileThemes',
+      tag: 'Customization',
+      desc: 'Allows profile theming with custom banner and accent colors.',
+      hasSettings: false,
+      start: function() { window.__vc_fake_prof_themes = true; },
+      stop: function() { window.__vc_fake_prof_themes = false; }
+    },
+    {
+      id: 'AlwaysAnimate',
+      name: 'AlwaysAnimate',
+      tag: 'Customization',
+      desc: 'Animates server icons, user avatars, and custom emojis continuously.',
+      hasSettings: false,
+      start: function() {
+        if (document.getElementById('vc-always-animate-css')) return;
+        const s = document.createElement('style');
+        s.id = 'vc-always-animate-css';
+        s.textContent = '[class*="avatar"] img, [class*="emoji"], [class*="guildIcon"] img { animation-play-state: running !important; }';
+        document.head.appendChild(s);
+      },
+      stop: function() {
+        const el = document.getElementById('vc-always-animate-css');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'ColorSighted',
+      name: 'ColorSighted',
+      tag: 'Visual',
+      desc: 'Restores classic clean status indicators without colorblind symbols.',
+      hasSettings: false,
+      start: function() {
+        if (document.getElementById('vc-color-sighted-css')) return;
+        const s = document.createElement('style');
+        s.id = 'vc-color-sighted-css';
+        s.textContent = '[class*="status"] svg rect { mask: none !important; rx: 50% !important; }';
+        document.head.appendChild(s);
+      },
+      stop: function() {
+        const el = document.getElementById('vc-color-sighted-css');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'FixDiscordCss',
+      name: 'FixDiscordCss',
+      tag: 'Visual',
+      desc: 'Removes unnecessary CSS lag, smooths animations, and speeds up rendering.',
+      hasSettings: false,
+      start: function() {
+        if (document.getElementById('vc-fix-css')) return;
+        const s = document.createElement('style');
+        s.id = 'vc-fix-css';
+        s.textContent = '* { scroll-behavior: smooth; } ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }';
+        document.head.appendChild(s);
+      },
+      stop: function() {
+        const el = document.getElementById('vc-fix-css');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'FixImagesQuality',
+      name: 'FixImagesQuality',
+      tag: 'Visual',
+      desc: 'Improves quality of images by loading them at their original uncompressed resolution.',
+      hasSettings: false,
+      timer: null,
+      start: function() {
+        const upgradeImgs = () => {
+          document.querySelectorAll('img[src*="size="]').forEach(img => {
+            img.src = img.src.replace(/size=\d+/, 'size=2048');
+          });
+        };
+        upgradeImgs();
+        this.timer = setInterval(upgradeImgs, 3000);
+      },
+      stop: function() {
+        if (this.timer) clearInterval(this.timer);
+      }
+    },
+
+    {
+      id: 'BetterUploadButton',
+      name: 'BetterUploadButton',
+      tag: 'QoL',
+      desc: 'Upload attachments with a single click, open menu with right click.',
+      hasSettings: false,
+      start: function() { window.__vc_better_upload = true; },
+      stop: function() { window.__vc_better_upload = false; }
+    },
+    {
+      id: 'BetterSettings',
+      name: 'BetterSettings',
+      tag: 'QoL',
+      desc: 'Enhances your settings menu with quick filter search and smooth navigation.',
+      hasSettings: false,
+      start: function() { window.__vc_better_settings = true; },
+      stop: function() { window.__vc_better_settings = false; }
+    },
+    {
+      id: 'BetterFolders',
+      name: 'BetterFolders',
+      tag: 'QoL',
+      desc: 'Shows server folders in a dedicated drawer with cleaner organization.',
+      hasSettings: false,
+      start: function() { window.__vc_better_folders = true; },
+      stop: function() { window.__vc_better_folders = false; }
+    },
+    {
+      id: 'BetterGifPicker',
+      name: 'BetterGifPicker',
+      tag: 'QoL',
+      desc: 'Makes the GIF picker open your favorite category by default.',
+      hasSettings: false,
+      start: function() { window.__vc_better_gif_picker = true; },
+      stop: function() { window.__vc_better_gif_picker = false; }
+    },
+    {
+      id: 'BetterGifAltText',
+      name: 'BetterGifAltText',
+      tag: 'QoL',
+      desc: 'Changes GIF alt text from simply being GIF to containing the tags and filename.',
+      hasSettings: false,
+      start: function() { window.__vc_better_gif_alt = true; },
+      stop: function() { window.__vc_better_gif_alt = false; }
+    },
+    {
+      id: 'AlwaysExpandRoles',
+      name: 'AlwaysExpandRoles',
+      tag: 'QoL',
+      desc: 'Always expands the role list in profile popouts without clicking show more.',
+      hasSettings: false,
+      start: function() {
+        if (document.getElementById('vc-expand-roles-css')) return;
+        const s = document.createElement('style');
+        s.id = 'vc-expand-roles-css';
+        s.textContent = '[class*="rolesList"], .roles-list { max-height: none !important; overflow: visible !important; } [class*="roleCollapseButton"] { display: none !important; }';
+        document.head.appendChild(s);
+      },
+      stop: function() {
+        const el = document.getElementById('vc-expand-roles-css');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'AccountPanelServerProfile',
+      name: 'AccountPanelServerProfile',
+      tag: 'QoL',
+      desc: 'Right click your account panel in the bottom left to view your profile in the current server.',
+      hasSettings: false,
+      start: function() { window.__vc_acct_panel_srv = true; },
+      stop: function() { window.__vc_acct_panel_srv = false; }
+    },
+    {
+      id: 'BetterRoleContext',
+      name: 'BetterRoleContext',
+      tag: 'QoL',
+      desc: 'Adds options to copy role color hex codes, edit roles, or view role icons.',
+      hasSettings: false,
+      start: function() { window.__vc_role_ctx = true; },
+      stop: function() { window.__vc_role_ctx = false; }
+    },
+    {
+      id: 'BetterRoleDot',
+      name: 'BetterRoleDot',
+      tag: 'QoL',
+      desc: 'Displays colored role dots next to usernames according to their top role.',
+      hasSettings: false,
+      start: function() { window.__vc_role_dot = true; },
+      stop: function() { window.__vc_role_dot = false; }
+    },
+    {
+      id: 'ReadAllNotificationsButton',
+      name: 'ReadAllNotificationsButton',
+      tag: 'QoL',
+      desc: 'Adds a one-click button to clear all unread badges across all servers.',
+      hasSettings: false,
+      timer: null,
+      start: function() {
+        this.timer = setInterval(() => {
+          const list = document.querySelector('nav[aria-label="Servers sidebar"], [class*="guilds"]');
+          if (!list || document.getElementById('vc-read-all-btn')) return;
+          const b = document.createElement('div');
+          b.id = 'vc-read-all-btn';
+          b.title = 'Mark All Read';
+          b.style.cssText = 'width: 32px; height: 32px; margin: 4px auto; border-radius: 50%; background: #2b2d31; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dbdee1;';
+          b.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+          b.onclick = () => {
+            document.querySelectorAll('[class*="unread"], .badge').forEach(el => el.remove());
+          };
+          list.prepend(b);
+        }, 1500);
+      },
+      stop: function() {
+        if (this.timer) clearInterval(this.timer);
+        const el = document.getElementById('vc-read-all-btn');
+        if (el) el.remove();
+      }
+    },
+    {
+      id: 'AutoDNDWhilePlaying',
+      name: 'AutoDNDWhilePlaying',
+      tag: 'QoL',
+      desc: 'Automatically sets your status to Do Not Disturb when playing a game.',
+      hasSettings: false,
+      start: function() { window.__vc_auto_dnd = true; },
+      stop: function() { window.__vc_auto_dnd = false; }
+    },
+
+    {
+      id: 'DeveloperTools',
+      name: 'DeveloperTools',
+      tag: 'Utility',
+      desc: 'Enables F12 and Ctrl+Shift+I to open Electron developer tools.',
+      hasSettings: false,
+      handler: null,
+      start: function() {
+        this.handler = (e) => {
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+            e.preventDefault();
+            if (window.voidcordDesktop?.toggleDevTools) {
+              window.voidcordDesktop.toggleDevTools();
+            }
+          }
+        };
+        window.addEventListener('keydown', this.handler);
+      },
+      stop: function() {
+        if (this.handler) window.removeEventListener('keydown', this.handler);
+      }
+    },
+    {
+      id: 'Experiments',
+      name: 'Experiments',
+      tag: 'Utility',
+      desc: 'Enables access to developer experiments and dev-only feature flags in settings.',
+      hasSettings: false,
+      start: function() {
+        try {
+          if (window.__vc_store) {
+            const s = window.__vc_store.getState?.() || {};
+            if (s.developer) s.developer = true;
+          }
+        } catch (_) {}
+      },
+      stop: function() {}
+    },
+    {
+      id: 'F8Break',
+      name: 'F8Break',
+      tag: 'Utility',
+      desc: 'Pause client execution immediately when you press F8 with DevTools open.',
+      hasSettings: false,
+      handler: null,
+      start: function() {
+        this.handler = (e) => {
+          if (e.key === 'F8') debugger;
+        };
+        window.addEventListener('keydown', this.handler);
+      },
+      stop: function() {
+        if (this.handler) window.removeEventListener('keydown', this.handler);
+      }
+    },
+    {
+      id: 'ConsoleShortcuts',
+      name: 'ConsoleShortcuts',
+      tag: 'Utility',
+      desc: 'Adds shorter aliases on the window console for quick inspection ($chat, $clear).',
+      hasSettings: false,
+      start: function() {
+        window.$chat = () => document.querySelector('.chat-input, textarea');
+        window.$clear = () => console.clear();
+      },
+      stop: function() {
+        delete window.$chat;
+        delete window.$clear;
+      }
+    },
+    {
+      id: 'ReverseImageSearch',
+      name: 'ReverseImageSearch',
+      tag: 'Utility',
+      desc: 'Right click images to quickly search on Google or SauceNAO.',
+      hasSettings: false,
+      start: function() { window.__vc_rev_img = true; },
+      stop: function() { window.__vc_rev_img = false; }
     }
   ];
 
-  let lastUploadPath = '';
+    let lastUploadPath = '';
   const catboxMap = new Map();
   let origFetch = null;
   let origGUM = null;
@@ -1180,6 +1869,13 @@
         const reqUrl = typeof fargs[0] === 'string' ? fargs[0] : (fargs[0]?.url || '');
         const reqOpts = fargs[1] || {};
         const reqMethod = (reqOpts.method || (typeof fargs[0] === 'object' && fargs[0]?.method) || 'GET').toUpperCase();
+
+        if (window.__vc_notrack && (reqUrl.includes('/science') || reqUrl.includes('/metrics') || reqUrl.includes('sentry') || reqUrl.includes('amplitude'))) {
+          return new Response(JSON.stringify({ ok: true }));
+        }
+        if (window.__vc_silent_typing && reqUrl.includes('/typing')) {
+          return new Response(JSON.stringify({ ok: true }));
+        }
 
         if (reqMethod === 'DELETE' || (typeof reqUrl === 'string' && reqUrl.includes('/messages'))) {
           const idMatch = reqUrl.match(/(?:id=eq\.|messages\/)([a-zA-Z0-9_-]+)/);
@@ -2669,11 +3365,14 @@
             </select>
             <select id="vc-filter-tag" class="vc-dropdown-select">
               <option value="all" ${curTag === 'all' ? 'selected' : ''}>Filter by Tags</option>
-              <option value="Visual" ${curTag === 'Visual' ? 'selected' : ''}>Visual</option>
               <option value="Chat" ${curTag === 'Chat' ? 'selected' : ''}>Chat</option>
-              <option value="Utility" ${curTag === 'Utility' ? 'selected' : ''}>Utility</option>
+              <option value="Privacy" ${curTag === 'Privacy' ? 'selected' : ''}>Privacy</option>
               <option value="Audio" ${curTag === 'Audio' ? 'selected' : ''}>Audio</option>
               <option value="Perks" ${curTag === 'Perks' ? 'selected' : ''}>Perks</option>
+              <option value="Customization" ${curTag === 'Customization' ? 'selected' : ''}>Customization</option>
+              <option value="Visual" ${curTag === 'Visual' ? 'selected' : ''}>Visual</option>
+              <option value="QoL" ${curTag === 'QoL' ? 'selected' : ''}>QoL</option>
+              <option value="Utility" ${curTag === 'Utility' ? 'selected' : ''}>Utility</option>
             </select>
           </div>
         </div>
