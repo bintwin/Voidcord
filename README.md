@@ -9,19 +9,13 @@ A client mod for Yapper that adds themes, plugins, and custom client tweaks.
 - **Quick CSS**: Live CSS editor to tweak the UI in real time.
 - **Plugins**: Built-in plugins toggleable in Settings.
 
-## Project layout
-
-- `github/` - C# WPF installer source code and embedded client payload.
-- `vercel/` - Landing page and website files.
-- `deploy.bat` - Quick deploy script for Vercel.
-
 ## Building from source
 
 Requires .NET SDK:
 ```bash
-dotnet build -c Release github/VoidcordInstaller.csproj
+dotnet build -c Release
 ```
-The compiled exe will be in `github/bin/Release/net48/VoidcordInstaller.exe`.
+The compiled exe will be in `bin/Release/net48/VoidcordInstaller.exe`.
 
 ## Installation
 
