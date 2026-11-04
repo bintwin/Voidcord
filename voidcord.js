@@ -2013,8 +2013,6 @@
     }
   ];
 
-    let lastUploadPath = '';
-  const catboxMap = new Map();
   let origFetch = null;
   let origGUM = null;
   let origGDM = null;
@@ -2079,69 +2077,6 @@
         }
 
         if (appPrefs.plugins['Plus4f']) {
-          if (reqUrl.includes('/api/media/upload-url') && reqMethod === 'POST') {
-            try {
-              const bodyObj = typeof reqOpts.body === 'string' ? JSON.parse(reqOpts.body) : null;
-              if (bodyObj && bodyObj.path) {
-                lastUploadPath = bodyObj.path;
-                if (bodyObj.size && bodyObj.size > 10485760) {
-                  const spoofed = { ...bodyObj, size: 1048576 };
-                  const spoofedOpts = { ...reqOpts, body: JSON.stringify(spoofed) };
-                  const spoofedRes = await origFetch.call(this, fargs[0], spoofedOpts);
-                  if (spoofedRes.ok) return spoofedRes;
-                  return new Response(JSON.stringify({
-                    url: 'https://catbox-internal.fallback/upload',
-                    headers: {}
-                  }), {
-                    status: 200,
-                    headers: { 'content-type': 'application/json' }
-                  });
-                }
-              }
-            } catch (e) {}
-          }
-
-          if (reqMethod === 'PUT' && reqOpts.body) {
-            if (String(reqUrl).includes('catbox-internal.fallback/upload')) {
-              try {
-                const fd = new FormData();
-                fd.append('reqtype', 'fileupload');
-                fd.append('fileToUpload', reqOpts.body);
-                const cRes = await origFetch('https://catbox.moe/user/api.php', { method: 'POST', body: fd });
-                const cUrl = (await cRes.text()).trim();
-                if (cUrl && cUrl.startsWith('http')) {
-                  const cleanProto = '//' + cUrl.replace(/^https?:[/][/]/, '');
-                  if (lastUploadPath) catboxMap.set(lastUploadPath, cleanProto);
-                  return new Response('', { status: 200, statusText: 'OK' });
-                }
-              } catch (e) {}
-            }
-
-            const putRes = await origFetch.apply(this, fargs);
-            if (!putRes.ok && (putRes.status === 413 || putRes.status >= 400)) {
-              try {
-                const fd = new FormData();
-                fd.append('reqtype', 'fileupload');
-                fd.append('fileToUpload', reqOpts.body);
-                const cRes = await origFetch('https://catbox.moe/user/api.php', { method: 'POST', body: fd });
-                const cUrl = (await cRes.text()).trim();
-                if (cUrl && cUrl.startsWith('http')) {
-                  const cleanProto = '//' + cUrl.replace(/^https?:[/][/]/, '');
-                  if (lastUploadPath) catboxMap.set(lastUploadPath, cleanProto);
-                  return new Response('', { status: 200, statusText: 'OK' });
-                }
-              } catch (e) {}
-            }
-            return putRes;
-          }
-
-          if (reqUrl.includes('/api/media/scan') && reqMethod === 'POST') {
-            return new Response(JSON.stringify({ ok: true, verdict: 'ok' }), {
-              status: 200,
-              headers: { 'content-type': 'application/json' }
-            });
-          }
-
           if (reqUrl.includes('/rest/v1/messages') && reqMethod === 'POST') {
             try {
               let parsedBody = typeof reqOpts.body === 'string' ? JSON.parse(reqOpts.body) : null;
@@ -2149,10 +2084,6 @@
                 const isArr = Array.isArray(parsedBody);
                 let msgRow = isArr ? parsedBody[0] : parsedBody;
                 if (msgRow) {
-                  if (msgRow.attachment_path && catboxMap.has(msgRow.attachment_path)) {
-                    msgRow.attachment_path = catboxMap.get(msgRow.attachment_path);
-                    reqOpts.body = JSON.stringify(isArr ? [msgRow] : msgRow);
-                  }
                   if (msgRow.content && msgRow.content.length > 2000) {
                     const initSend = await origFetch.call(this, fargs[0], reqOpts);
                     if (initSend.ok) return initSend;
