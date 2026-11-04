@@ -1,0 +1,185 @@
+/**
+ * @name midnight (voidcord)
+ * @description a dark, customizable discord theme. based on https://github.com/nanoqoi/vencord-theme.
+ * @author refact0r
+ * @version 2.0.1
+ * @invite nz87hXyvcy
+ * @website https://github.com/refact0r/midnight-discord
+ * @source https://github.com/refact0r/midnight-discord/blob/master/themes/midnight-vencord.theme.css
+ * @authorId 508863359777505290
+ * @authorLink https://www.refact0r.dev
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
+
+body {
+    
+    --font: 'Inter';
+
+    --gap: 12px; 
+    --divider-thickness: 4px; 
+
+    --animations: on; 
+    --list-item-transition: 0.2s ease; 
+    --dms-icon-svg-transition: 0.4s ease; 
+
+    --move-top-bar-buttons: off; 
+    --custom-app-top-bar-height: 32px; 
+
+    --custom-window-controls: on; 
+    --window-control-size: 14px; 
+
+    --dms-icon: on; 
+    --dms-icon-svg-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 27 27' width='24' height='24'%3E%3Cpath fill='currentColor' d='M0 0h7v1H6v1H5v1H4v1H3v1H2v1h5v1H0V6h1V5h1V4h1V3h1V2h1V1H0m13 2h5v1h-1v1h-1v1h-1v1h3v1h-5V7h1V6h1V5h1V4h-3m8 5h1v5h1v-1h1v1h-1v1h1v-1h1v1h-1v3h-1v1h-2v1h-1v1h1v-1h2v-1h1v2h-1v1h-2v1h-1v-1h-1v1h-6v-1h-1v-1h-1v-2h1v1h2v1h3v1h1v-1h-1v-1h-3v-1h-4v-4h1v-2h1v-1h1v-1h1v2h1v1h1v-1h1v1h-1v1h2v-2h1v-2h1v-1h1M8 14h2v1H9v4h1v2h1v1h1v1h1v1h4v1h-6v-1H5v-1H4v-5h1v-1h1v-2h2m17 3h1v3h-1v1h-1v1h-1v2h-2v-2h2v-1h1v-1h1m1 0h1v3h-1v1h-2v-1h1v-1h1'%3E%3C/path%3E%3C/svg%3E"); 
+    --dms-icon-svg-size: 90%; 
+    --dms-icon-color-before: var(--icon-primary); 
+    --dms-icon-color-after: var(--white); 
+
+    --dms-background: off; 
+    --dms-background-image-url: url(''); 
+    --dms-background-image-size: cover; 
+    --dms-background-color: linear-gradient(70deg, var(--blue-2), var(--purple-2), var(--red-2)); 
+
+    --background-image: off; 
+    --background-image-url: url(''); 
+
+    --transparency-tweaks: off; 
+    --remove-bg-layer: off; 
+    --panel-blur: off; 
+    --blur-amount: 12px; 
+    --bg-floating: var(--bg-3); 
+
+    --flipped-chatbar: on; 
+    --chatbar-height: 47px; 
+    --chatbar-padding: 8px; 
+
+    --small-user-panel: off; 
+}
+
+:root {
+    --colors: on; 
+
+    --text-0: var(--bg-4); 
+    --text-1: hsl(38, 47%, 90%); 
+    --text-2: hsl(38, 47%, 80%); 
+    --text-3: #d4be98; 
+    --text-4: #a79a83; 
+    --text-5: #d4be9866; 
+
+    --bg-1: hsl(20, 5%, 25%); 
+    --bg-2: #3c3836; 
+    --bg-3: hsl(20, 2%, 19%); 
+    --bg-4: #282828; 
+    --hover: hsla(20, 3%, 40%, 0.1); 
+    --active: hsla(20, 3%, 40%, 0.2); 
+    --active-2: hsla(20, 3%, 40%, 0.3); 
+    --message-hover: hsla(0, 0%, 0%, 0.1); 
+
+    --accent-1: var(--purple-1); 
+    --accent-2: var(--purple-2); 
+    --accent-3: var(--purple-3); 
+    --accent-4: var(--purple-4); 
+    --accent-5: var(--purple-5); 
+    --accent-new: var(--accent-2); 
+    --mention: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 90%) 40%, transparent); 
+    --mention-hover: linear-gradient(to right, color-mix(in hsl, var(--accent-2), transparent 95%) 40%, transparent); 
+    --reply: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 90%) 40%, transparent); 
+    --reply-hover: linear-gradient(to right, color-mix(in hsl, var(--text-3), transparent 95%) 40%, transparent); 
+
+    --online: var(--green-2); 
+    --dnd: var(--red-2); 
+    --idle: var(--yellow-2); 
+    --streaming: var(--purple-2); 
+    --offline: var(--text-4); 
+
+    --border-light: var(--hover); 
+    --border: var(--active); 
+    --button-border: hsl(0, 0%, 100%, 0.1); 
+
+    --red-1: hsl(3, 76%, 70%);
+    --red-2: #ea6962;
+    --red-3: #ea6962;
+    --red-4: hsl(3, 76%, 60%);
+    --red-5: hsl(3, 76%, 55%);
+
+    --green-1: hsl(70, 36%, 60%);
+    --green-2: #a8b665;
+    --green-3: #a8b665;
+    --green-4: hsl(70, 36%, 50%);
+    --green-5: hsl(70, 36%, 45%);
+
+    --blue-1: hsl(167, 24%, 63%);
+    --blue-2: #7caea3;
+    --blue-3: #7caea3;
+    --blue-4: hsl(167, 24%, 53%);
+    --blue-5: hsl(167, 24%, 48%);
+
+    --yellow-1: hsl(37, 63%, 64%);
+    --yellow-2: #d8a656;
+    --yellow-3: #d8a656;
+    --yellow-4: hsl(37, 63%, 54%);
+    --yellow-5: hsl(37, 63%, 49%);
+
+    --purple-1: hsl(344, 47%, 73%);
+    --purple-2: #d3869b;
+    --purple-3: #d3869b;
+    --purple-4: hsl(344, 47%, 63%);
+    --purple-5: hsl(344, 47%, 58%);
+}
+
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+
+  --bg-rail: #191716 !important;
+  --bg-side: #1f1d1d !important;
+  --bg-side-solid: #1f1d1d !important;
+  --bg-main: #282828 !important;
+  --bg-elev: #32302f !important;
+  --bg-float: #282828 !important;
+  --bg-input: #3c3836 !important;
+  --bg-hover: rgba(212, 190, 152, 0.08) !important;
+  --bg-active: rgba(212, 190, 152, 0.16) !important;
+  --text: #d4be98 !important;
+  --text-muted: #a79a83 !important;
+  --text-faint: rgba(212, 190, 152, 0.45) !important;
+  --border: rgba(212, 190, 152, 0.12) !important;
+  --accent: #d3869b !important;
+  --accent-hover: #e094a9 !important;
+  --accent-soft: rgba(211, 134, 155, 0.15) !important;
+  --accent-fill: #d3869b !important;
+  --accent-fill-hover: #e094a9 !important;
+  --danger: #ea6962 !important;
+  --success: #a8b665 !important;
+  --warning: #d8a656 !important;
+}
+
+body, html {
+  font-family: var(--font) !important;
+  background-color: var(--bg-main) !important;
+  color: var(--text) !important;
+}
+
+.channel-row:hover, .seg button:hover, .tab:hover, .rail-item:hover {
+  background-color: var(--bg-hover) !important;
+}
+.channel-row.active, .seg button.active, .tab.active, .rail-item.active {
+  background-color: var(--bg-active) !important;
+  color: #fff !important;
+}
+.chat-input, input, textarea, select {
+  background-color: var(--bg-input) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+.msg:hover, .chat-row:hover {
+  background-color: rgba(212, 190, 152, 0.03) !important;
+}
+.settings-nav {
+  background-color: var(--bg-side) !important;
+  border-right: 1px solid var(--border) !important;
+}
+.settings-main {
+  background-color: var(--bg-main) !important;
+}

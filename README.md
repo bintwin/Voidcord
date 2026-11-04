@@ -34,6 +34,19 @@
 
 ---
 
+## Building from Source
+
+### Building the Installer
+To build `VoidcordInstaller.exe` from source:
+1. Open a terminal in the `installer/` directory.
+2. Run:
+   ```bash
+   dotnet build -c Release
+   ```
+The compiled executable will be located in `installer/bin/Release/net48/VoidcordInstaller.exe`.
+
+---
+
 ## Website
 
 Visit our official website hosted on Vercel: [https://voidcord.vercel.app](https://voidcord.vercel.app)
