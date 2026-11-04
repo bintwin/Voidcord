@@ -17,7 +17,7 @@
 ## Installation
 
 ### Method 1: Installer (Recommended)
-1. Go to the [Releases](https://github.com/spoonyspoonicus/Voidcord/releases) section.
+1. Go to the [Releases](https://github.com/bintwin/Voidcord/releases) section.
 2. Download `VoidcordInstaller.exe`.
 3. Close Yapper completely.
 4. Run `VoidcordInstaller.exe` and click **Install**.
@@ -36,10 +36,11 @@
 
 ## Website
 
-Visit our official website hosted on Vercel: [https://voidcord-xi.vercel.app](https://voidcord-xi.vercel.app)
+Visit our official website hosted on Vercel: [https://voidcord.vercel.app](https://voidcord.vercel.app)
 
 ---
 
 ## License
 
 This project is released under the [MIT License](LICENSE). Unofficial modification; not affiliated with Yapper or Yapin'.
+
