@@ -14,46 +14,37 @@
 
 ---
 
+## Project Structure
+
+- `App.cs`: Application entry point.
+- `MainWindow.cs`: Full C# source for the installer UI, dark theme styling, Yapper path detection, patching engine, and uninstallation logic.
+- `VoidcordInstaller.csproj`: .NET WPF project file for building the Windows installer.
+- `voidcord.js`: The Voidcord client script injected into Yapper.
+- `midnight.theme.css`: Default midnight theme bundled with the installer.
+- `voidicon.ico` / `voidicon.png`: Application branding and icons.
+
+---
+
+## Building from Source
+
+To compile `VoidcordInstaller.exe`:
+```bash
+dotnet build -c Release
+```
+The compiled executable will be generated in `bin/Release/net48/VoidcordInstaller.exe`.
+
+---
+
 ## Installation
 
-### Method 1: Installer (Recommended)
 1. Go to the [Releases](https://github.com/bintwin/Voidcord/releases) section.
 2. Download `VoidcordInstaller.exe`.
 3. Close Yapper completely.
 4. Run `VoidcordInstaller.exe` and click **Install**.
 5. Launch Yapper. A new **Voidcord** tab will appear in Settings.
 
-### Method 2: Manual Injection
-1. Close Yapper.
-2. Copy `voidcord.js` from this repository.
-3. Paste it into your Yapper installation directory:
-   ```
-   %LOCALAPPDATA%\Programs\yapper-desktop\resources\voidcord.js
-   ```
-4. Restart Yapper.
-
----
-
-## Building from Source
-
-### Building the Installer
-To build `VoidcordInstaller.exe` from source:
-1. Open a terminal in the `installer/` directory.
-2. Run:
-   ```bash
-   dotnet build -c Release
-   ```
-The compiled executable will be located in `installer/bin/Release/net48/VoidcordInstaller.exe`.
-
----
-
-## Website
-
-Visit our official website hosted on Vercel: [https://voidcord.vercel.app](https://voidcord.vercel.app)
-
 ---
 
 ## License
 
 This project is released under the [MIT License](LICENSE). Unofficial modification; not affiliated with Yapper or Yapin'.
-

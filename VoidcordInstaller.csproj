@@ -11,8 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\voidcord.js" Link="voidcord_payload" LogicalName="voidcord_payload" />
-    <EmbeddedResource Include="..\voidicon.png" Link="voidicon_image" LogicalName="voidicon_image" />
-    <EmbeddedResource Include="midnight.theme.css" Link="midnight_theme_payload" LogicalName="midnight_theme_payload" />
+    <EmbeddedResource Include="voidcord.js" LogicalName="voidcord_payload" />
+    <EmbeddedResource Include="voidicon.png" LogicalName="voidicon_image" />
+    <EmbeddedResource Include="midnight.theme.css" LogicalName="midnight_theme_payload" />
   </ItemGroup>
 </Project>

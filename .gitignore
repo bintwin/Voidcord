@@ -1,6 +1,8 @@
 bin/
 obj/
 dist/
+.vs/
+*.user
 .vercel
 node_modules
 .DS_Store
