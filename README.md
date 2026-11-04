@@ -16,12 +16,9 @@
 
 ## Project Structure
 
-- `App.cs`: Application entry point.
-- `MainWindow.cs`: Full C# source for the installer UI, dark theme styling, Yapper path detection, patching engine, and uninstallation logic.
-- `VoidcordInstaller.csproj`: .NET WPF project file for building the Windows installer.
-- `voidcord.js`: The Voidcord client script injected into Yapper.
-- `midnight.theme.css`: Default midnight theme bundled with the installer.
-- `voidicon.ico` / `voidicon.png`: Application branding and icons.
+- `github/`: Windows WPF installer application source files (`App.cs`, `MainWindow.cs`, `VoidcordInstaller.csproj`, `voidcord.js`, `midnight.theme.css`, icons).
+- `vercel/`: Official website files and deployment configuration.
+- `deploy.bat`: Quick script to deploy the website to Vercel.
 
 ---
 
@@ -29,9 +26,9 @@
 
 To compile `VoidcordInstaller.exe`:
 ```bash
-dotnet build -c Release
+dotnet build -c Release github/VoidcordInstaller.csproj
 ```
-The compiled executable will be generated in `bin/Release/net48/VoidcordInstaller.exe`.
+The compiled executable will be generated in `github/bin/Release/net48/VoidcordInstaller.exe`.
 
 ---
 
