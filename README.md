@@ -1,47 +1,35 @@
 # Voidcord
 
-> Client modification for Yapper / Yapin' with custom themes, plugins, and tools.
+A client mod for Yapper that adds themes, plugins, and custom client tweaks.
 
----
+## What's included
 
-## Features
+- **Message Logger**: View deleted and edited messages right in chat with time and author tags.
+- **Theme Loader**: Load custom CSS themes (comes with midnight dark theme built-in).
+- **Quick CSS**: Live CSS editor to tweak the UI in real time.
+- **Plugins**: Built-in plugins toggleable in Settings.
 
-- **Message Logger**: Displays deleted and edited messages with historical logs, author tags, and timestamp tracking.
-- **Theme Manager**: Custom CSS theme loader with instant previews, auto-injection, and compatibility with popular themes.
-- **Quick CSS**: Live CSS injection tab for tweaking Yapper's UI in real time.
-- **Plugin System**: Modular plugins switchable in Settings with custom hotkeys and preferences.
-- **Update Alerts**: Integrated notification system when new updates or injections are available.
+## Project layout
 
----
+- `github/` - C# WPF installer source code and embedded client payload.
+- `vercel/` - Landing page and website files.
+- `deploy.bat` - Quick deploy script for Vercel.
 
-## Project Structure
+## Building from source
 
-- `github/`: Windows WPF installer application source files (`App.cs`, `MainWindow.cs`, `VoidcordInstaller.csproj`, `voidcord.js`, `midnight.theme.css`, icons).
-- `vercel/`: Official website files and deployment configuration.
-- `deploy.bat`: Quick script to deploy the website to Vercel.
-
----
-
-## Building from Source
-
-To compile `VoidcordInstaller.exe`:
+Requires .NET SDK:
 ```bash
 dotnet build -c Release github/VoidcordInstaller.csproj
 ```
-The compiled executable will be generated in `github/bin/Release/net48/VoidcordInstaller.exe`.
-
----
+The compiled exe will be in `github/bin/Release/net48/VoidcordInstaller.exe`.
 
 ## Installation
 
-1. Go to the [Releases](https://github.com/bintwin/Voidcord/releases) section.
-2. Download `VoidcordInstaller.exe`.
-3. Close Yapper completely.
-4. Run `VoidcordInstaller.exe` and click **Install**.
-5. Launch Yapper. A new **Voidcord** tab will appear in Settings.
-
----
+1. Grab `VoidcordInstaller.exe` from the [Releases](https://github.com/bintwin/Voidcord/releases) tab.
+2. Close Yapper.
+3. Run `VoidcordInstaller.exe` and hit **Install**.
+4. Open Yapper and find the **Voidcord** tab in your Settings.
 
 ## License
 
-This project is released under the [MIT License](LICENSE). Unofficial modification; not affiliated with Yapper or Yapin'.
+[MIT](LICENSE). Unofficial modification; not affiliated with Yapper or Yapin'.
