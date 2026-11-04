@@ -2,7 +2,7 @@
   if (window.__voidcord_injected) return;
   window.__voidcord_injected = true;
 
-  const vcStyles = `
+  let vcStyles = `
 .vc-nav-group {
   margin-top: 8px;
   padding-top: 8px;

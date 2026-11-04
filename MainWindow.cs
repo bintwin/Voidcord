@@ -658,11 +658,6 @@ public class MainWindow : Window
 
 	private string GetPayload()
 	{
-		string resourceString = GetResourceString("voidcord_payload");
-		if (!string.IsNullOrEmpty(resourceString))
-		{
-			return resourceString;
-		}
 		string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 		string path = System.IO.Path.Combine(baseDirectory, "voidcord.js");
 		if (File.Exists(path))
@@ -673,6 +668,16 @@ public class MainWindow : Window
 		if (File.Exists(path2))
 		{
 			return File.ReadAllText(path2, Encoding.UTF8);
+		}
+		string path3 = System.IO.Path.Combine(baseDirectory, "..", "..", "..", "voidcord.js");
+		if (File.Exists(path3))
+		{
+			return File.ReadAllText(path3, Encoding.UTF8);
+		}
+		string resourceString = GetResourceString("voidcord_payload");
+		if (!string.IsNullOrEmpty(resourceString))
+		{
+			return resourceString;
 		}
 		return "";
 	}
@@ -758,6 +763,14 @@ public class MainWindow : Window
 		catch
 		{
 		}
+		string pathRoot = System.IO.Path.Combine(text, "voidcord.js");
+		try
+		{
+			File.WriteAllText(pathRoot, payload, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+		}
+		catch
+		{
+		}
 		string text8 = System.IO.Path.Combine(text, "voidcord", "themes");
 		try
 		{
@@ -825,7 +838,7 @@ public class MainWindow : Window
 				int num4 = text12.IndexOf(text13);
 				if (num4 != -1)
 				{
-					string value2 = "\n    try {\n      const vcExt = path.join(process.resourcesPath, 'voidcord.js');\n      const vcInt = path.join(__dirname, 'voidcord.js');\n      const vcFile = fs.existsSync(vcExt) ? vcExt : vcInt;\n      if (fs.existsSync(vcFile)) {\n        const vcSrc = fs.readFileSync(vcFile, 'utf8');\n        wc.executeJavaScript(vcSrc).catch(() => {});\n      }\n    } catch (e) {}\n";
+					string value2 = "\n    try {\n      const vcExt = path.join(process.resourcesPath, 'voidcord.js');\n      const vcRoot = path.join(process.resourcesPath, '..', 'voidcord.js');\n      const vcInt = path.join(__dirname, 'voidcord.js');\n      const vcFile = fs.existsSync(vcExt) ? vcExt : (fs.existsSync(vcRoot) ? vcRoot : vcInt);\n      if (fs.existsSync(vcFile)) {\n        const vcSrc = fs.readFileSync(vcFile, 'utf8');\n        wc.executeJavaScript(vcSrc).catch(() => {});\n      }\n    } catch (e) {}\n";
 					text12 = text12.Insert(num4 + text13.Length, value2);
 				}
 			}
